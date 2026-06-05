@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block title %}Дашборд — Nomad Tracker{% endblock %}
+
+{% block content %}
+
+{% set sev_dot = {
+  'ok':      'dot-teal',
+  'info':    'dot-blue',
+  'warning': 'dot-gold',
+  'urgent':  'dot-red',
+  'unknown': 'dot-dim',
+} %}
+{% set sev_label = {
+  'ok':      'Без изменений',
+  'info':    'Есть новости',
+  'warning': 'Изменения',
+  'urgent':  'Срочно',
+  'unknown': 'Не проверялось',
+} %}
+{% set sev_class = {
+  'ok':      'sev-ok',
+  'info':    'sev-info',
+  'warning': 'sev-warning',
+  'urgent':  'sev-urgent',
+  'unknown': 'sev-unknown',
+} %}
+
+<!-- Page header -->
+<div class="flex items-start justify-between mb-10">
+  <div>
+    <div class="flex items-center gap-3 mb-1">
+      <div style="width:3px;height:32px;background:linear-gradient(180deg,#c9a84c,transparent);"></div>
+      <h1 style="font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:600;color:#d4cdbf;letter-spacing:0.04em;">
+        Дашборд
+      </h1>
+    </div>
+    {% if profile %}
+    <p class="text-xs tracking-widest uppercase ml-4" style="color:#5a6a82;">
+      Паспорт: {{ profile.citizenship_label }}
+      {% if profile.current_country %} · {{ profile.current_country }}{% endif %}
+    </p>
+    {% endif %}
+  </div>
+
+  <div class="flex items-center gap-4">
+    {% if last_check %}
+    <span class="text-xs" style="color:#2a3a52;">
+      Проверено {{ last_check.strftime('%d.%m %H:%M') }}
+    </span>
+    {% endif %}
+    <form method="post" action="/check-now">
+      <button type="submit" class="btn-primary px-5 py-2 text-xs tracking-widest uppercase rounded">
+        ↻ Проверить
+      </button>
+    </form>
+  </div>
+</div>
+
+{% if request.query_params.get('checking') %}
+<div class="mb-8 px-5 py-3 rounded text-xs tracking-wide" style="background:rgba(0,200,200,0.06);border:1px solid rgba(0,200,200,0.2);color:#00c8c8;">
+  ⏳ Проверка запущена — займёт 1–2 минуты. Обнови страницу через минуту.
+</div>
+{% endif %}
+
+<!-- Stats row -->
+<div class="grid grid-cols-3 gap-4 mb-10">
+  {% set urgent_n = countries | selectattr('last_severity', 'equalto', 'urgent') | list | length %}
+  {% set warning_n = countries | selectattr('last_severity', 'equalto', 'warning') | list | length %}
+
+  <div class="rounded p-5" style="background:#0d1220;border:1px solid #1e2d45;">
+    <div style="font-size:2rem;font-weight:600;color:#c9a84c;font-family:'Cormorant Garamond',serif;">
+      {{ countries | length }}
+    </div>
+    <div class="text-xs tracking-widest uppercase mt-1" style="color:#5a6a82;">Стран</div>
+  </div>
+
+  <div class="rounded p-5" style="background:#0d1220;border:1px solid #1e2d45;">
+    <div style="font-size:2rem;font-weight:600;color:#c9a84c;font-family:'Cormorant Garamond',serif;">
+      {{ total_alerts }}
+    </div>
+    <div class="text-xs tracking-widest uppercase mt-1" style="color:#5a6a82;">Алертов</div>
+  </div>
+
+  <div class="rounded p-5" style="background:#0d1220;border:1px solid #1e2d45;">
+    {% if urgent_n > 0 %}
+      <div style="font-size:2rem;font-weight:600;color:#ff3a5c;font-family:'Cormorant Garamond',serif;">{{ urgent_n }}</div>
+      <div class="text-xs tracking-widest uppercase mt-1" style="color:#5a6a82;">Срочных</div>
+    {% elif warning_n > 0 %}
+      <div style="font-size:2rem;font-weight:600;color:#c9a84c;font-family:'Cormorant Garamond',serif;">{{ warning_n }}</div>
+      <div class="text-xs tracking-widest uppercase mt-1" style="color:#5a6a82;">Изменений</div>
+    {% else %}
+      <div style="font-size:2rem;font-weight:600;color:#00c8c8;font-family:'Cormorant Garamond',serif;">OK</div>
+      <div class="text-xs tracking-widest uppercase mt-1" style="color:#5a6a82;">Статус</div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Countries by region -->
+{% set regions = countries | map(attribute='region') | unique | list %}
+{% for region in regions %}
+{% set region_countries = countries | selectattr('region', 'equalto', region) | list %}
+
+<div class="mb-10">
+  <div class="art-divider mb-5">{{ region }}</div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+    {% for c in region_countries %}
+    {% set sev = c.last_severity or 'unknown' %}
+    <div class="country-card rounded p-5 {{ sev_class.get(sev, 'sev-unknown') }}"
+         style="background:#0d1220;">
+      <div class="flex items-start justify-between mb-3">
+        <div class="flex items-center gap-3">
+          <span style="font-size:1.6rem;line-height:1;">{{ c.flag }}</span>
+          <span style="font-weight:500;color:#d4cdbf;font-size:0.9rem;">{{ c.name }}</span>
+        </div>
+        <div class="flex items-center gap-2 mt-1">
+          <div class="{{ sev_dot.get(sev, 'dot-dim') }}"></div>
+          <span class="text-xs" style="color:#5a6a82;">{{ sev_label.get(sev, sev) }}</span>
+        </div>
+      </div>
+
+      <p class="text-xs leading-relaxed min-h-[36px]" style="color:#8892a4;">
+        {{ c.last_status or 'Нет данных' }}
+      </p>
+
+      {% if c.last_check %}
+      <p class="text-xs mt-3" style="color:#2a3a52;">
+        {{ c.last_check.strftime('%d.%m.%Y %H:%M') }}
+      </p>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endfor %}
+
+<!-- Recent alerts -->
+{% if recent_alerts %}
+<div class="mt-2">
+  <div class="flex items-center justify-between mb-5">
+    <div class="art-divider flex-1">Последние алерты</div>
+    <a href="/alerts" class="text-xs ml-6 tracking-widest uppercase" style="color:#c9a84c;">Все →</a>
+  </div>
+
+  <div class="space-y-2">
+    {% for a in recent_alerts %}
+    <div class="flex items-center gap-4 px-5 py-3 rounded"
+         style="background:#0d1220;border:1px solid #1e2d45;">
+      <span class="text-sm shrink-0">
+        {% if a.severity == 'urgent' %}🔴{% elif a.severity == 'warning' %}🟡{% else %}🔵{% endif %}
+      </span>
+      <div class="flex-1 min-w-0">
+        <span class="text-xs font-medium" style="color:#d4cdbf;">{{ a.country_name }}</span>
+        <span class="text-xs mx-2" style="color:#2a3a52;">—</span>
+        <span class="text-xs" style="color:#8892a4;">{{ a.title }}</span>
+      </div>
+      <span class="text-xs shrink-0" style="color:#2a3a52;">{{ a.created_at.strftime('%d.%m %H:%M') }}</span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

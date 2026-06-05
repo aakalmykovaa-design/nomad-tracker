@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block title %}Настройки — Nomad Tracker{% endblock %}
+
+{% block content %}
+
+<div class="flex items-start justify-between mb-10">
+  <div>
+    <div class="flex items-center gap-3 mb-1">
+      <div style="width:3px;height:32px;background:linear-gradient(180deg,#c9a84c,transparent);"></div>
+      <h1 style="font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:600;color:#d4cdbf;letter-spacing:0.04em;">
+        Настройки
+      </h1>
+    </div>
+  </div>
+</div>
+
+{% if request.query_params.get('saved') == 'profile' %}
+<div class="mb-6 px-5 py-3 rounded text-xs tracking-wide" style="background:rgba(0,200,200,0.06);border:1px solid rgba(0,200,200,0.2);color:#00c8c8;">✓ Профиль сохранён</div>
+{% endif %}
+{% if request.query_params.get('saved') == 'telegram' %}
+<div class="mb-6 px-5 py-3 rounded text-xs tracking-wide" style="background:rgba(0,200,200,0.06);border:1px solid rgba(0,200,200,0.2);color:#00c8c8;">✓ Настройки Telegram сохранены</div>
+{% endif %}
+{% if request.query_params.get('telegram_test') == 'ok' %}
+<div class="mb-6 px-5 py-3 rounded text-xs tracking-wide" style="background:rgba(0,200,200,0.06);border:1px solid rgba(0,200,200,0.2);color:#00c8c8;">✓ Тестовое сообщение отправлено!</div>
+{% elif request.query_params.get('telegram_test') == 'fail' %}
+<div class="mb-6 px-5 py-3 rounded text-xs tracking-wide" style="background:rgba(255,58,92,0.06);border:1px solid rgba(255,58,92,0.2);color:#ff3a5c;">✗ Не удалось отправить. Проверь токен и Chat ID.</div>
+{% endif %}
+
+<!-- Profile -->
+<div class="rounded p-7 mb-5" style="background:#0d1220;border:1px solid #1e2d45;">
+  <div class="art-divider mb-6">Профиль</div>
+  <form method="post" action="/settings/profile" class="space-y-5">
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="block text-xs tracking-widest uppercase mb-2" style="color:#5a6a82;">Гражданство (код)</label>
+        <input type="text" name="citizenship" value="{{ profile.citizenship if profile else 'RU' }}"
+          maxlength="3" placeholder="RU"
+          class="sh-input w-full rounded px-4 py-2.5 text-sm">
+      </div>
+      <div>
+        <label class="block text-xs tracking-widest uppercase mb-2" style="color:#5a6a82;">Гражданство (название)</label>
+        <input type="text" name="citizenship_label" value="{{ profile.citizenship_label if profile else 'Россия' }}"
+          placeholder="Россия"
+          class="sh-input w-full rounded px-4 py-2.5 text-sm">
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-xs tracking-widest uppercase mb-2" style="color:#5a6a82;">Где сейчас (необязательно)</label>
+      <input type="text" name="current_country" value="{{ profile.current_country if profile else '' }}"
+        placeholder="Например: Армения"
+        class="sh-input w-full rounded px-4 py-2.5 text-sm">
+    </div>
+
+    <div>
+      <label class="block text-xs tracking-widest uppercase mb-3" style="color:#5a6a82;">Что отслеживать</label>
+      <div class="flex flex-wrap gap-3">
+        {% for key, label in all_topics %}
+        <label class="flex items-center gap-2.5 cursor-pointer">
+          <input type="checkbox" name="topics" value="{{ key }}"
+            {% if key in topics_active %}checked{% endif %}
+            class="rounded" style="accent-color:#c9a84c;">
+          <span class="text-xs" style="color:#8892a4;">{{ label }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <button type="submit" class="btn-primary px-6 py-2.5 text-xs tracking-widest uppercase rounded">
+      Сохранить профиль
+    </button>
+  </form>
+</div>
+
+<!-- Telegram -->
+<div class="rounded p-7 mb-5" style="background:#0d1220;border:1px solid #1e2d45;">
+  <div class="art-divider mb-6">Telegram</div>
+  <p class="text-xs mb-5 leading-relaxed" style="color:#5a6a82;">
+    Создай бота через
+    <a href="https://t.me/BotFather" target="_blank" style="color:#c9a84c;">@BotFather</a>,
+    скопируй токен в файл <code class="px-1.5 py-0.5 rounded text-xs" style="background:#07090f;color:#8892a4;">.env</code>.
+    Chat ID — напиши своему боту и узнай через
+    <a href="https://t.me/userinfobot" target="_blank" style="color:#c9a84c;">@userinfobot</a>.
+  </p>
+
+  <form method="post" action="/settings/telegram" class="space-y-5">
+    <div>
+      <label class="block text-xs tracking-widest uppercase mb-2" style="color:#5a6a82;">Telegram Chat ID</label>
+      <input type="text" name="telegram_chat_id" value="{{ settings.get('telegram_chat_id', '') }}"
+        placeholder="123456789"
+        class="sh-input w-full rounded px-4 py-2.5 text-sm">
+    </div>
+
+    <div>
+      <label class="block text-xs tracking-widest uppercase mb-2" style="color:#5a6a82;">Частота проверок</label>
+      <select name="check_interval_hours"
+        class="sh-input rounded px-4 py-2.5 text-sm">
+        {% for h in [6, 12, 24, 48] %}
+        <option value="{{ h }}" {% if settings.get('check_interval_hours', '12') == h|string %}selected{% endif %}>
+          каждые {{ h }} ч.
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="flex gap-3">
+      <button type="submit" class="btn-primary px-6 py-2.5 text-xs tracking-widest uppercase rounded">
+        Сохранить
+      </button>
+      <button type="button" onclick="document.getElementById('testForm').submit()"
+        class="btn-secondary px-6 py-2.5 text-xs tracking-widest uppercase rounded">
+        Тест
+      </button>
+    </div>
+  </form>
+  <form id="testForm" method="post" action="/settings/telegram/test" class="hidden"></form>
+</div>
+
+<!-- Countries -->
+<div id="countries" class="rounded p-7" style="background:#0d1220;border:1px solid #1e2d45;">
+  <div class="art-divider mb-6">Страны</div>
+
+  <div class="space-y-1 mb-8">
+    {% for c in countries %}
+    <div class="flex items-center justify-between py-3" style="border-bottom:1px solid #131e2e;">
+      <div class="flex items-center gap-3">
+        <span>{{ c.flag }}</span>
+        <span class="text-sm" style="color:#d4cdbf;">{{ c.name }}</span>
+        <span class="text-xs tracking-widest uppercase" style="color:#2a3a52;">{{ c.region }}</span>
+      </div>
+      <form method="post" action="/settings/countries/toggle/{{ c.code }}">
+        <button type="submit" class="px-4 py-1 rounded text-xs tracking-widest uppercase transition-all
+          {% if c.is_active %}btn-primary{% else %}btn-secondary{% endif %}">
+          {% if c.is_active %}Активна{% else %}Откл{% endif %}
+        </button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+
+  <details>
+    <summary class="text-xs tracking-widest uppercase cursor-pointer" style="color:#5a6a82;">+ Добавить страну</summary>
+    <form method="post" action="/settings/countries/add" class="mt-4 grid grid-cols-4 gap-3">
+      <input type="text" name="code" placeholder="PT" maxlength="5"
+        class="sh-input rounded px-3 py-2.5 text-sm">
+      <input type="text" name="name" placeholder="Название"
+        class="sh-input rounded px-3 py-2.5 text-sm">
+      <input type="text" name="flag" placeholder="🏳️" maxlength="5"
+        class="sh-input rounded px-3 py-2.5 text-sm">
+      <button type="submit" class="btn-primary rounded text-xs tracking-widest uppercase">
+        Добавить
+      </button>
+    </form>
+  </details>
+</div>
+
+{% endblock %}
