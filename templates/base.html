@@ -13,7 +13,7 @@
       --bg:      #f2ede4;
       --black:   #0a0a0a;
       --white:   #f2ede4;
-      --yellow:  #ff5c00;
+      --yellow:  #BF5AF2;
       --red:     #ff2b2b;
       --gray:    #d6d0c7;
       --border:  2px solid #0a0a0a;
@@ -123,8 +123,9 @@
       color: rgba(242,237,228,0.4);
       margin-top: 6px;
     }
-    .stat-card.accent { background: var(--yellow); color: #fff; }
-    .stat-card.accent .stat-label { color: rgba(255,255,255,0.5); }
+    .stat-card.accent { background: var(--black); border-left: 5px solid var(--yellow); }
+    .stat-card.accent .stat-number { color: var(--yellow); }
+    .stat-card.accent .stat-label { color: rgba(255,255,255,0.4); }
 
     /* SEVERITY BADGE */
     .badge {
