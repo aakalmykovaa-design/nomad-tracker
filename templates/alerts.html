@@ -1,65 +1,40 @@
 {% extends "base.html" %}
 {% block title %}Алерты — Nomad Tracker{% endblock %}
-
 {% block content %}
 
-<div class="flex items-start justify-between mb-10">
-  <div>
-    <div class="flex items-center gap-3 mb-1">
-      <div style="width:3px;height:32px;background:linear-gradient(180deg,#c9a84c,transparent);"></div>
-      <h1 style="font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:600;color:#d4cdbf;letter-spacing:0.04em;">
-        История алертов
-      </h1>
-    </div>
-    <p class="text-xs tracking-widest uppercase ml-4" style="color:#5a6a82;">{{ alerts | length }} записей</p>
+<div class="page-title">Алерты</div>
+<div class="page-sub">{{ alerts | length }} записей</div>
+
+{% if not alerts %}
+<div style="border:var(--border); padding:80px 32px; text-align:center; box-shadow:var(--shadow);">
+  <div class="mono" style="font-size:32px; color:#ccc; margin-bottom:16px;">[ ]</div>
+  <div style="font-size:11px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase; color:#aaa;">
+    Алертов нет
+  </div>
+  <div style="font-size:12px; color:#bbb; margin-top:8px;">
+    Нажми «Проверить» на дашборде
   </div>
 </div>
 
-{% if not alerts %}
-<div class="rounded p-16 text-center" style="background:#0d1220;border:1px solid #1e2d45;">
-  <div style="font-size:3rem;margin-bottom:16px;opacity:0.3;">◇</div>
-  <p class="text-xs tracking-widest uppercase mb-2" style="color:#5a6a82;">Алертов пока нет</p>
-  <p class="text-xs" style="color:#2a3a52;">Нажми «Проверить» на дашборде чтобы запустить первую проверку</p>
-</div>
-
 {% else %}
-<div class="space-y-3">
+<div style="display:flex; flex-direction:column; gap:2px;">
   {% for a in alerts %}
-  <div class="rounded px-6 py-4
-    {% if a.severity == 'urgent' %}sev-urgent
-    {% elif a.severity == 'warning' %}sev-warning
-    {% elif a.severity == 'info' %}sev-info
-    {% else %}sev-ok{% endif %}"
-    style="background:#0d1220;border:1px solid #1e2d45;border-left-width:3px;">
+  <div style="border:var(--border); border-top: {% if a.severity == 'urgent' %}4px solid var(--red){% elif a.severity == 'warning' %}4px solid var(--yellow){% else %}4px solid var(--black){% endif %}; padding:16px 20px; background:var(--bg); display:flex; align-items:flex-start; gap:16px;">
 
-    <div class="flex items-start justify-between gap-6">
-      <div class="flex-1 min-w-0">
-        <div class="flex items-center gap-3 mb-2">
-          <span class="text-xs font-semibold tracking-wide" style="color:#d4cdbf;">
-            {{ a.country_name }}
-          </span>
-          <span style="color:#2a3a52;font-size:10px;">◆</span>
-          <span class="text-xs" style="color:#8892a4;">{{ a.title }}</span>
-        </div>
-        <p class="text-xs leading-relaxed" style="color:#5a6a82;">{{ a.summary }}</p>
-        <div class="flex items-center gap-4 mt-3">
-          <span class="text-xs" style="color:#2a3a52;">{{ a.created_at.strftime('%d.%m.%Y  %H:%M') }}</span>
-          {% if a.sent_telegram %}
-          <span class="text-xs tracking-wide" style="color:#00c8c8;">✓ Telegram</span>
-          {% endif %}
-        </div>
+    <span class="badge {% if a.severity == 'urgent' %}badge-urgent{% elif a.severity == 'warning' %}badge-warning{% else %}badge-info{% endif %}" style="margin-top:2px; white-space:nowrap;">
+      {% if a.severity == 'urgent' %}Срочно{% elif a.severity == 'warning' %}Важно{% else %}Инфо{% endif %}
+    </span>
+
+    <div style="flex:1; min-width:0;">
+      <div style="font-weight:700; font-size:14px; margin-bottom:4px;">
+        {{ a.country_name }} <span style="color:#aaa; font-weight:400;">·</span> {{ a.title }}
       </div>
-
-      <div class="shrink-0 mt-1">
-        <span class="px-3 py-1 rounded text-xs tracking-widest uppercase
-          {% if a.severity == 'urgent' %}
-            " style="background:rgba(255,58,92,0.1);border:1px solid rgba(255,58,92,0.3);color:#ff3a5c;">Срочно
-          {% elif a.severity == 'warning' %}
-            " style="background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:#c9a84c;">Важно
-          {% else %}
-            " style="background:rgba(74,158,255,0.1);border:1px solid rgba(74,158,255,0.3);color:#4a9eff;">Инфо
-          {% endif %}
-        </span>
+      <div style="font-size:12px; color:#666; line-height:1.6;">{{ a.summary }}</div>
+      <div style="display:flex; align-items:center; gap:16px; margin-top:10px;">
+        <span class="mono" style="font-size:10px; color:#aaa;">{{ a.created_at.strftime('%d.%m.%Y  %H:%M') }}</span>
+        {% if a.sent_telegram %}
+        <span style="font-size:10px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#666;">✓ Telegram</span>
+        {% endif %}
       </div>
     </div>
   </div>

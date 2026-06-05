@@ -4,200 +4,283 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}Nomad Tracker{% endblock %}</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            sh: {
-              bg:     '#07090f',
-              panel:  '#0d1220',
-              card:   '#101828',
-              border: '#1e2d45',
-              gold:   '#c9a84c',
-              'gold-dim': '#8a6f2e',
-              teal:   '#00c8c8',
-              red:    '#ff3a5c',
-              text:   '#d4cdbf',
-              muted:  '#5a6a82',
-            }
-          },
-          fontFamily: {
-            sans: ['"Inter"', 'system-ui', 'sans-serif'],
-            display: ['"Cormorant Garamond"', 'Georgia', 'serif'],
-          }
-        }
-      }
-    }
-  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    body { background-color: #07090f; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* Art Deco geometric background */
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image:
-        linear-gradient(rgba(201,168,76,0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(201,168,76,0.03) 1px, transparent 1px);
-      background-size: 40px 40px;
-      pointer-events: none;
-      z-index: 0;
+    :root {
+      --bg:      #f2ede4;
+      --black:   #0a0a0a;
+      --white:   #f2ede4;
+      --yellow:  #ffe500;
+      --red:     #ff2b2b;
+      --gray:    #d6d0c7;
+      --border:  2px solid #0a0a0a;
+      --shadow:  4px 4px 0px #0a0a0a;
+      --shadow-sm: 3px 3px 0px #0a0a0a;
     }
 
-    .page-wrap { position: relative; z-index: 1; }
-
-    /* Gold glow on hover cards */
-    .country-card {
-      transition: all 0.25s ease;
-      border: 1px solid #1e2d45;
-    }
-    .country-card:hover {
-      border-color: rgba(201,168,76,0.35);
-      box-shadow: 0 0 24px rgba(201,168,76,0.07), inset 0 0 24px rgba(201,168,76,0.03);
-      transform: translateY(-1px);
+    html { background: var(--bg); }
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background: var(--bg);
+      color: var(--black);
+      min-height: 100vh;
     }
 
-    /* Severity left-border */
-    .sev-ok      { border-left: 3px solid #00c8c8; }
-    .sev-info    { border-left: 3px solid #4a9eff; }
-    .sev-warning { border-left: 3px solid #c9a84c; }
-    .sev-urgent  { border-left: 3px solid #ff3a5c; box-shadow: -4px 0 12px rgba(255,58,92,0.2); }
-    .sev-unknown { border-left: 3px solid #2a3a52; }
+    a { color: inherit; text-decoration: none; }
 
-    /* Art Deco section divider */
-    .art-divider {
+    /* NAV */
+    nav {
+      border-bottom: var(--border);
+      background: var(--black);
+      color: var(--white);
+      padding: 0 32px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .nav-logo {
+      font-family: 'Space Mono', monospace;
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--yellow);
+    }
+
+    .nav-links { display: flex; gap: 32px; }
+
+    .nav-link {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(242,237,228,0.5);
+      transition: color 0.15s;
+    }
+    .nav-link:hover { color: var(--white); }
+    .nav-link.active { color: var(--yellow); }
+
+    /* LAYOUT */
+    main { max-width: 1080px; margin: 0 auto; padding: 48px 32px; }
+
+    /* PAGE TITLE */
+    .page-title {
+      font-family: 'Space Mono', monospace;
+      font-size: 36px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: -0.01em;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .page-sub {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 40px;
+    }
+
+    /* CARD */
+    .card {
+      border: var(--border);
+      background: var(--bg);
+      padding: 20px;
+      box-shadow: var(--shadow);
+      transition: box-shadow 0.15s, transform 0.15s;
+    }
+    .card:hover {
+      box-shadow: 6px 6px 0px var(--black);
+      transform: translate(-1px, -1px);
+    }
+
+    /* STAT CARD */
+    .stat-card {
+      border: var(--border);
+      background: var(--black);
+      color: var(--white);
+      padding: 20px 24px;
+    }
+    .stat-number {
+      font-family: 'Space Mono', monospace;
+      font-size: 40px;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .stat-label {
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(242,237,228,0.4);
+      margin-top: 6px;
+    }
+    .stat-card.accent { background: var(--yellow); color: var(--black); }
+    .stat-card.accent .stat-label { color: rgba(10,10,10,0.5); }
+
+    /* SEVERITY BADGE */
+    .badge {
+      display: inline-block;
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border: 1.5px solid var(--black);
+    }
+    .badge-ok      { background: transparent; color: var(--black); }
+    .badge-info    { background: var(--black); color: var(--white); }
+    .badge-warning { background: var(--yellow); color: var(--black); }
+    .badge-urgent  { background: var(--red); color: var(--white); border-color: var(--red); }
+    .badge-unknown { background: var(--gray); color: #888; border-color: var(--gray); }
+
+    /* SECTION HEADER */
+    .section-header {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #888;
       display: flex;
       align-items: center;
       gap: 12px;
-      color: #8a6f2e;
-      font-size: 10px;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
+      margin-bottom: 16px;
     }
-    .art-divider::before, .art-divider::after {
+    .section-header::after {
       content: '';
       flex: 1;
       height: 1px;
-      background: linear-gradient(90deg, transparent, #8a6f2e55, transparent);
+      background: #ccc;
     }
 
-    /* Gold shimmer badge */
-    .badge-gold {
-      background: linear-gradient(135deg, rgba(201,168,76,0.15), rgba(201,168,76,0.05));
-      border: 1px solid rgba(201,168,76,0.3);
-      color: #c9a84c;
+    /* BUTTON */
+    .btn {
+      display: inline-block;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 10px 20px;
+      border: var(--border);
+      background: var(--black);
+      color: var(--white);
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+      transition: box-shadow 0.1s, transform 0.1s;
     }
-
-    /* Teal glow indicator */
-    .dot-teal  { width:7px; height:7px; border-radius:50%; background:#00c8c8; box-shadow: 0 0 8px #00c8c8; }
-    .dot-gold  { width:7px; height:7px; border-radius:50%; background:#c9a84c; box-shadow: 0 0 8px #c9a84c; }
-    .dot-red   { width:7px; height:7px; border-radius:50%; background:#ff3a5c; box-shadow: 0 0 8px #ff3a5c; animation: pulse-red 1.5s infinite; }
-    .dot-blue  { width:7px; height:7px; border-radius:50%; background:#4a9eff; box-shadow: 0 0 8px #4a9eff; }
-    .dot-dim   { width:7px; height:7px; border-radius:50%; background:#2a3a52; }
-
-    @keyframes pulse-red {
-      0%, 100% { opacity: 1; box-shadow: 0 0 8px #ff3a5c; }
-      50%       { opacity: 0.5; box-shadow: 0 0 2px #ff3a5c; }
+    .btn:hover {
+      box-shadow: none;
+      transform: translate(3px, 3px);
     }
-
-    /* Navbar gold underline on active */
-    .nav-active { color: #c9a84c !important; }
-    .nav-active::after {
-      content: '';
-      display: block;
-      height: 1px;
-      background: #c9a84c;
-      margin-top: 2px;
-      box-shadow: 0 0 6px #c9a84c;
-    }
-
-    /* Primary button */
-    .btn-primary {
-      background: linear-gradient(135deg, #c9a84c, #a07d30);
-      color: #07090f;
-      font-weight: 600;
-      letter-spacing: 0.05em;
-      transition: all 0.2s;
-    }
-    .btn-primary:hover {
-      background: linear-gradient(135deg, #dbb85c, #b08d3a);
-      box-shadow: 0 0 16px rgba(201,168,76,0.35);
-    }
-
-    /* Secondary button */
-    .btn-secondary {
+    .btn-outline {
       background: transparent;
-      border: 1px solid #1e2d45;
-      color: #5a6a82;
-      transition: all 0.2s;
+      color: var(--black);
     }
-    .btn-secondary:hover {
-      border-color: rgba(201,168,76,0.4);
-      color: #c9a84c;
-    }
+    .btn-outline:hover { background: var(--gray); }
 
-    /* Input fields */
-    .sh-input {
-      background: #07090f;
-      border: 1px solid #1e2d45;
-      color: #d4cdbf;
-      transition: border-color 0.2s;
-    }
-    .sh-input:focus {
+    /* INPUT */
+    .input {
+      width: 100%;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+      padding: 10px 14px;
+      border: var(--border);
+      background: var(--white);
+      color: var(--black);
       outline: none;
-      border-color: rgba(201,168,76,0.5);
-      box-shadow: 0 0 0 3px rgba(201,168,76,0.06);
+      transition: box-shadow 0.15s;
     }
-    .sh-input::placeholder { color: #2a3a52; }
+    .input:focus { box-shadow: var(--shadow-sm); }
+    .input::placeholder { color: #bbb; }
 
-    /* Scrollbar */
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-track { background: #07090f; }
-    ::-webkit-scrollbar-thumb { background: #1e2d45; border-radius: 2px; }
+    .select {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+      padding: 10px 14px;
+      border: var(--border);
+      background: var(--white);
+      color: var(--black);
+      outline: none;
+      appearance: none;
+      cursor: pointer;
+    }
+
+    /* LABEL */
+    .label {
+      display: block;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 8px;
+    }
+
+    /* ALERT BANNER */
+    .alert-banner {
+      border: var(--border);
+      padding: 12px 16px;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      margin-bottom: 24px;
+    }
+    .alert-banner.ok      { background: #e8f5e9; }
+    .alert-banner.error   { background: #ffeaea; }
+    .alert-banner.info    { background: #fff8d6; }
+
+    /* DIVIDER */
+    hr { border: none; border-top: 1px solid #ccc; margin: 24px 0; }
+
+    /* MONO */
+    .mono { font-family: 'Space Mono', monospace; }
+
+    /* GRID UTILS */
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    @media (max-width: 768px) {
+      .grid-3 { grid-template-columns: 1fr; }
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+
+    /* COUNTRY CARD specific */
+    .country-card { position: relative; }
+    .country-flag { font-size: 28px; line-height: 1; margin-bottom: 12px; display: block; }
+    .country-name { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+    .country-status { font-size: 12px; color: #555; line-height: 1.5; min-height: 36px; margin-bottom: 12px; }
+    .country-date { font-family: 'Space Mono', monospace; font-size: 10px; color: #aaa; }
+
+    .sev-warning { border-top: 4px solid var(--yellow); }
+    .sev-urgent  { border-top: 4px solid var(--red); }
+    .sev-info    { border-top: 4px solid var(--black); }
+    .sev-ok      { border-top: 4px solid transparent; }
+    .sev-unknown { border-top: 4px solid var(--gray); }
   </style>
 </head>
-<body class="text-sh-text min-h-screen">
-<div class="page-wrap">
+<body>
 
-  <!-- Navigation -->
-  <nav style="background:#0d1220; border-bottom: 1px solid #1e2d45;">
-    <div class="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <!-- Art Deco logo mark -->
-        <div style="width:28px;height:28px;border:1px solid rgba(201,168,76,0.6);transform:rotate(45deg);display:flex;align-items:center;justify-content:center;">
-          <div style="width:10px;height:10px;background:#c9a84c;transform:rotate(0deg);"></div>
-        </div>
-        <span style="font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:600;color:#c9a84c;letter-spacing:0.08em;">
-          NOMAD TRACKER
-        </span>
-      </div>
+<nav>
+  <span class="nav-logo">// Nomad Tracker</span>
+  <div class="nav-links">
+    <a href="/" class="nav-link {% if request.url.path == '/' %}active{% endif %}">Дашборд</a>
+    <a href="/alerts" class="nav-link {% if '/alerts' in request.url.path %}active{% endif %}">Алерты</a>
+    <a href="/settings" class="nav-link {% if '/settings' in request.url.path %}active{% endif %}">Настройки</a>
+  </div>
+</nav>
 
-      <div class="flex items-center gap-8">
-        <a href="/" class="text-xs tracking-widest uppercase transition-colors
-          {% if request.url.path == '/' %}nav-active text-sh-gold{% else %}text-sh-muted hover:text-sh-text{% endif %}">
-          Дашборд
-        </a>
-        <a href="/alerts" class="text-xs tracking-widest uppercase transition-colors
-          {% if '/alerts' in request.url.path %}nav-active text-sh-gold{% else %}text-sh-muted hover:text-sh-text{% endif %}">
-          Алерты
-        </a>
-        <a href="/settings" class="text-xs tracking-widest uppercase transition-colors
-          {% if '/settings' in request.url.path %}nav-active text-sh-gold{% else %}text-sh-muted hover:text-sh-text{% endif %}">
-          Настройки
-        </a>
-      </div>
-    </div>
-  </nav>
+<main>
+  {% block content %}{% endblock %}
+</main>
 
-  <main class="max-w-6xl mx-auto px-6 py-10">
-    {% block content %}{% endblock %}
-  </main>
-
-</div>
 </body>
 </html>
