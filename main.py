@@ -12,7 +12,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
-from database import get_db, init_db, Profile, TrackedCountry, Alert, Setting, DEFAULT_COUNTRIES
+from database import get_db, init_db, Profile, TrackedCountry, Alert, Setting, DEFAULT_COUNTRIES, COUNTRY_CATALOG
 from checker import check_countries
 from telegram_notifier import send_alert, send_test_message
 from scheduler import start_scheduler, stop_scheduler
@@ -186,6 +186,10 @@ def save_profile(
     citizenship_label: str = Form(...),
     current_country: str = Form(""),
     topics: list[str] = Form(default=[]),
+    goals: str = Form("nomad"),
+    budget: str = Form(""),
+    languages: str = Form(""),
+    extra_citizenships: str = Form(""),
     db: Session = Depends(get_db),
 ):
     profile = db.query(Profile).first()
@@ -196,6 +200,10 @@ def save_profile(
     profile.citizenship_label = citizenship_label
     profile.current_country = current_country
     profile.topics = ",".join(topics) if topics else "visa"
+    profile.goals = goals
+    profile.budget = budget
+    profile.languages = languages
+    profile.extra_citizenships = extra_citizenships
     profile.updated_at = datetime.utcnow()
     db.commit()
     return RedirectResponse("/settings?saved=profile", status_code=303)
@@ -250,6 +258,50 @@ def add_country(
     code = code.upper().strip()
     if not db.query(TrackedCountry).filter_by(code=code).first():
         db.add(TrackedCountry(code=code, name=name, flag=flag, region=region))
+        db.commit()
+    return RedirectResponse("/settings#countries", status_code=303)
+
+
+# ── Country Catalog ───────────────────────────────────────────────────────────
+
+@app.get("/countries", response_class=HTMLResponse)
+def countries_page(request: Request, q: str = "", db: Session = Depends(get_db)):
+    tracked_codes = {c.code for c in db.query(TrackedCountry).all()}
+    catalog = COUNTRY_CATALOG
+    if q:
+        q_lower = q.lower()
+        catalog = [c for c in catalog if q_lower in c["name"].lower() or q_lower in c["code"].lower()]
+    return templates.TemplateResponse("countries.html", {
+        "request": request,
+        "catalog": catalog,
+        "tracked_codes": tracked_codes,
+        "q": q,
+    })
+
+
+@app.post("/countries/add/{code}")
+def add_from_catalog(code: str, db: Session = Depends(get_db)):
+    item = next((c for c in COUNTRY_CATALOG if c["code"] == code), None)
+    if item and not db.query(TrackedCountry).filter_by(code=code).first():
+        db.add(TrackedCountry(code=item["code"], name=item["name"], flag=item["flag"], region=item["region"]))
+        db.commit()
+    return RedirectResponse("/countries", status_code=303)
+
+
+@app.post("/settings/countries/delete/{code}")
+def delete_country(code: str, db: Session = Depends(get_db)):
+    country = db.query(TrackedCountry).filter_by(code=code).first()
+    if country:
+        db.delete(country)
+        db.commit()
+    return RedirectResponse("/settings#countries", status_code=303)
+
+
+@app.post("/settings/countries/{code}/topics")
+def save_country_topics(code: str, topics: list[str] = Form(default=[]), db: Session = Depends(get_db)):
+    country = db.query(TrackedCountry).filter_by(code=code).first()
+    if country:
+        country.custom_topics = ",".join(topics)
         db.commit()
     return RedirectResponse("/settings#countries", status_code=303)
 
